@@ -8,4 +8,5 @@ SOURCES += \
         network.cpp
 
 HEADERS += \
-    network.h
+    network.h \
+    rutainfo.h
