@@ -2,11 +2,10 @@
 #define RUTAINFO_H
 
 #include <string>
-using namespace std;
 
 struct RutaInfo {
-    int costo;
-    string siguiente;
+    int costo;           // costo total hasta destino
+    std::string siguiente;    // next-hop desde el router actual
 };
 
 #endif

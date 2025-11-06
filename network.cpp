@@ -1,9 +1,22 @@
 #include "Network.h"
 #include <iostream>
+#include <map>
+#include <list>
+#include <set>
+#include <vector>
+#include <queue>
+#include <string>
+#include <climits>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <random>  // Para std::random_device, mt19937_64, etc.
+
 using namespace std;
 
-void Network::dijkstra(const string& origen, map<string,int>& dist, map<string,string>& previo) const {
+void Network::dijkstra(const string& origen,
+                       map<string, int>& dist,
+                       map<string, string>& previo) const {
     dist.clear(); previo.clear();
     set<string> visitados;
 
@@ -11,7 +24,7 @@ void Network::dijkstra(const string& origen, map<string,int>& dist, map<string,s
     if (!routers.count(origen)) return;
     dist[origen] = 0;
 
-    priority_queue<pair<int,string>, vector<pair<int,string>>, greater<>> pq;
+    priority_queue<pair<int, string>, vector<pair<int, string>>, greater<>> pq;
     pq.push({0, origen});
 
     while (!pq.empty()) {
@@ -33,7 +46,7 @@ void Network::dijkstra(const string& origen, map<string,int>& dist, map<string,s
 }
 
 vector<string> Network::reconstruirCamino(const string& origen, const string& destino,
-                                          const map<string,string>& previo) const {
+                                          const map<string, string>& previo) const {
     vector<string> camino;
     if (!routers.count(origen) || !routers.count(destino)) return camino;
 
@@ -42,7 +55,7 @@ vector<string> Network::reconstruirCamino(const string& origen, const string& de
         camino.push_back(at);
         if (at == origen) break;
         auto it = previo.find(at);
-        if (it == previo.end()) {
+        if (it == previo.end()) { // no hay camino
             camino.clear();
             return camino;
         }
@@ -58,11 +71,13 @@ void Network::agregarRouter(const string& id) {
 
 void Network::eliminarRouter(const string& id) {
     if (!routers.count(id)) return;
+    // quitar referencias en vecinos de otros routers
     for (auto& [rid, r] : routers) {
         if (rid == id) continue;
         r.eliminarVecino(id);
     }
     routers.erase(id);
+    // tras cambios, actualizar tablas
     actualizarTablas();
 }
 
@@ -90,17 +105,19 @@ void Network::establecerCostoEnlace(const string& id1, const string& id2, int nu
 
 void Network::actualizarTablas() {
     for (auto& [id, router] : routers) {
-        map<string,int> dist;
-        map<string,string> previo;
+        map<string, int> dist;
+        map<string, string> previo;
         dijkstra(id, dist, previo);
 
         router.limpiarTabla();
 
         for (const auto& [dest, costo] : dist) {
-            if (costo == INT_MAX) continue;
+            if (costo == INT_MAX) continue; // inalcanzable
             string siguienteHop;
-            if (dest == id) siguienteHop = "";
-            else {
+            if (dest == id) {
+                siguienteHop = ""; // self
+            } else {
+                // encontrar el first hop: desde 'id' hacia 'dest'
                 auto camino = reconstruirCamino(id, dest, previo);
                 if (camino.size() >= 2) siguienteHop = camino[1];
             }
@@ -117,8 +134,10 @@ int Network::costoMinimo(const string& origen, const string& destino) const {
 }
 
 vector<string> Network::caminoMinimo(const string& origen, const string& destino) const {
-    map<string,int> dist;
-    map<string,string> previo;
+    if (!routers.count(origen) || !routers.count(destino)) return {};
+    // podemos reconstruir directamente vía Dijkstra para obtener camino completo
+    map<string, int> dist;
+    map<string, string> previo;
     dijkstra(origen, dist, previo);
     return reconstruirCamino(origen, destino, previo);
 }
@@ -127,6 +146,7 @@ bool Network::cargarDesdeArchivo(const string& rutaArchivo) {
     ifstream in(rutaArchivo);
     if (!in.is_open()) return false;
 
+    // limpiar red actual
     routers.clear();
 
     string linea;
@@ -141,21 +161,29 @@ bool Network::cargarDesdeArchivo(const string& rutaArchivo) {
         } else if (token == "LINK") {
             string a, b; int c;
             ss >> a >> b >> c;
-            if (ss) conectar(a, b, c);
+            if (ss) conectar(a, b, c); // conectar ya actualiza tablas
         }
     }
 
+    // asegurar tablas consistentes
     actualizarTablas();
     return true;
 }
 
-void Network::generarAleatoria(int n, double densidad, int maxCosto, uint64_t seed) {
+void Network::generarAleatoria(int n, double densidad, int maxCosto, std::uint64_t seed) {
     routers.clear();
     if (n <= 0 || maxCosto <= 0) return;
 
+    // Si seed es 0, usar random_device
+    if (seed == 0) {
+        std::random_device rd;
+        seed = rd();
+    }
+
+    // crear routers con ids "A","B","C",...
     for (int i = 0; i < n; ++i) {
         string id(1, char('A' + (i % 26)));
-        if (i >= 26) id += to_string(i / 26);
+        if (i >= 26) id += to_string(i / 26); // evita duplicados tras Z
         agregarRouter(id);
     }
 
@@ -163,10 +191,11 @@ void Network::generarAleatoria(int n, double densidad, int maxCosto, uint64_t se
     ids.reserve(routers.size());
     for (auto& [id, r] : routers) ids.push_back(id);
 
-    mt19937_64 gen(seed);
-    uniform_real_distribution<double> prob(0.0, 1.0);
-    uniform_int_distribution<int> costoDist(1, maxCosto);
+    std::mt19937_64 gen(seed);
+    std::uniform_real_distribution<double> prob(0.0, 1.0);
+    std::uniform_int_distribution<int> costoDist(1, maxCosto);
 
+    // conectar pares según densidad
     for (size_t i = 0; i < ids.size(); ++i) {
         for (size_t j = i + 1; j < ids.size(); ++j) {
             if (prob(gen) <= densidad) {
@@ -176,6 +205,7 @@ void Network::generarAleatoria(int n, double densidad, int maxCosto, uint64_t se
         }
     }
 
+    // Asegurar conectividad básica: si quedó aislado, conectarlo al primero
     for (const auto& id : ids) {
         if (routers[id].vecinos.empty() && ids.size() > 1) {
             int c = costoDist(gen);
