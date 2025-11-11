@@ -69,8 +69,8 @@ void Network::agregarRouter(const string& id) {
     routers.emplace(id, Router(id));
 }
 
-void Network::eliminarRouter(const string& id) {
-    if (!routers.count(id)) return;
+bool Network::eliminarRouter(const string& id) {
+    if (!routers.count(id)) return false;
     // quitar referencias en vecinos de otros routers
     for (auto& [rid, r] : routers) {
         if (rid == id) continue;
@@ -79,6 +79,7 @@ void Network::eliminarRouter(const string& id) {
     routers.erase(id);
     // tras cambios, actualizar tablas
     actualizarTablas();
+    return true;
 }
 
 void Network::conectar(const string& id1, const string& id2, int costo) {
@@ -89,18 +90,20 @@ void Network::conectar(const string& id1, const string& id2, int costo) {
     actualizarTablas();
 }
 
-void Network::desconectar(const string& id1, const string& id2) {
-    if (!routers.count(id1) || !routers.count(id2)) return;
+bool Network::desconectar(const string& id1, const string& id2) {
+    if (!routers.count(id1) || !routers.count(id2)) return false;
     routers[id1].eliminarVecino(id2);
     routers[id2].eliminarVecino(id1);
     actualizarTablas();
+    return true;
 }
 
-void Network::establecerCostoEnlace(const string& id1, const string& id2, int nuevoCosto) {
-    if (!routers.count(id1) || !routers.count(id2)) return;
+bool Network::establecerCostoEnlace(const string& id1, const string& id2, int nuevoCosto) {
+    if (!routers.count(id1) || !routers.count(id2)) return false;
     routers[id1].agregarVecino(id2, nuevoCosto);
     routers[id2].agregarVecino(id1, nuevoCosto);
     actualizarTablas();
+    return true;
 }
 
 void Network::actualizarTablas() {
@@ -195,6 +198,13 @@ void Network::generarAleatoria(int n, double densidad, int maxCosto, std::uint64
     std::uniform_real_distribution<double> prob(0.0, 1.0);
     std::uniform_int_distribution<int> costoDist(1, maxCosto);
 
+    for (size_t i = 1; i < ids.size(); ++i) {
+        std::uniform_int_distribution<size_t> previoDist(0, i - 1);
+        string otro = ids[previoDist(gen)];
+        int c = costoDist(gen);
+        conectar(ids[i], otro, c);
+    }
+
     // conectar pares según densidad
     for (size_t i = 0; i < ids.size(); ++i) {
         for (size_t j = i + 1; j < ids.size(); ++j) {
@@ -202,14 +212,6 @@ void Network::generarAleatoria(int n, double densidad, int maxCosto, std::uint64
                 int c = costoDist(gen);
                 conectar(ids[i], ids[j], c);
             }
-        }
-    }
-
-    // Asegurar conectividad básica: si quedó aislado, conectarlo al primero
-    for (const auto& id : ids) {
-        if (routers[id].vecinos.empty() && ids.size() > 1) {
-            int c = costoDist(gen);
-            conectar(id, ids[0] == id ? ids[1] : ids[0], c);
         }
     }
 

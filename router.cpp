@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Router::Router(): id('') {}
+Router::Router(): id("") {}
 
 Router::Router(string id): id(id){}
 
@@ -24,7 +24,7 @@ void Router::eliminarVecino(const string &vecino){
 
     for (auto it = vecinos.begin(); it != vecinos.end(); ) {
         if (it->first == vecino) {
-            it = lista.erase(it);
+            it = vecinos.erase(it);
         } else {
             ++it;
         }
@@ -32,13 +32,13 @@ void Router::eliminarVecino(const string &vecino){
 
 }
 
-void Router::mostrarTabla(){
+void Router::mostrarTabla()const{
 
     cout<<"Tabla de enrutamiento de "<<id<<":\n";
     cout<<"\nDestino\tCosto\tSiguiente\n";
 
     for (const auto& [destino,info]: tabla){
-        cout<<destino<<"\t"<<info.costo<<(info.siguiente.empty()?"-":info.siguiente)<<endl;
+        cout<<destino<<"\t"<<info.costo<<"\t"<<(info.siguiente.empty()?"-":info.siguiente)<<endl;
     }
     cout<<endl;
 

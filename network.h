@@ -20,10 +20,10 @@ private:
 
 public:
     void agregarRouter(const std::string& id);
-    void eliminarRouter(const std::string& id);
+    bool eliminarRouter(const std::string& id);
     void conectar(const std::string& id1, const std::string& id2, int costo);
-    void desconectar(const std::string& id1, const std::string& id2);
-    void establecerCostoEnlace(const std::string& id1, const std::string& id2, int nuevoCosto);
+    bool desconectar(const std::string& id1, const std::string& id2);
+    bool establecerCostoEnlace(const std::string& id1, const std::string& id2, int nuevoCosto);
     void actualizarTablas();
     int costoMinimo(const std::string& origen, const std::string& destino) const;
     std::vector<std::string> caminoMinimo(const std::string& origen, const std::string& destino) const;
