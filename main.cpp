@@ -1,9 +1,18 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <algorithm>
+#include <cctype>
 #include "network.h"
 
 using namespace std;
+
+string aMayusculas(const string& str) {
+    string resultado = str;
+    transform(resultado.begin(), resultado.end(), resultado.begin(),
+              [](unsigned char c) { return toupper(c); });
+    return resultado;
+}
 
 int leerEntero(const string& mensaje, int min=0, int max=10000) {
     int valor;
@@ -73,6 +82,7 @@ int main(){
             cout<<"Ingrese el ID del nuevo router: ";
             string id;
             cin>>id;
+            id = aMayusculas(id);
             net.agregarRouter(id);
             cout<<"Router agregado\n";
         }
@@ -80,6 +90,7 @@ int main(){
             cout<<"Ingrese el ID del router a eliminar: ";
             string id;
             cin>>id;
+            id = aMayusculas(id);
             if (net.eliminarRouter(id)){cout<<"Router eliminado\n";}
             else{cout<<"El router no exite en la red";}
         }
@@ -87,10 +98,12 @@ int main(){
             cout<<"Ingrese el ID del primer router: ";
             string id1;
             cin>>id1;
+            id1 = aMayusculas(id1);
             cout<<"Ingrese el ID del segundo router: ";
             string id2;
             cin>>id2;
-            int costo=leerEntero("Ingrese el costo de la conexion(min $1): ",1);
+            id2 = aMayusculas(id2);
+            int costo=leerEntero("Ingrese el costo de la conexion(min 1): ",1);
             net.conectar(id1,id2,costo);
             cout<<"Routers conectados\n";
         }
@@ -98,9 +111,11 @@ int main(){
             cout<<"Ingrese el ID del primer router: ";
             string id1;
             cin>>id1;
+            id1 = aMayusculas(id1);
             cout<<"Ingrese el ID del segundo router: ";
             string id2;
             cin>>id2;
+            id2 = aMayusculas(id2);
             if (net.desconectar(id1,id2)){cout<<"Routers desconectados\n";}
             else{cout<<"Routers no existentes en la red\n";}
         }
@@ -108,20 +123,24 @@ int main(){
             cout<<"Ingrese el ID del router origen: ";
             string id1;
             cin>>id1;
+            id1 = aMayusculas(id1);
             cout<<"Ingrese el ID del router destino: ";
             string id2;
             cin>>id2;
+            id2 = aMayusculas(id2);
             int costo=net.costoMinimo(id1,id2);
             if (costo==INT_MAX){cout<<"Routers no conectados\n";}
-            else{cout<<"Costo: $"<<costo<<endl;}
+            else{cout<<"Costo: "<<costo<<endl;}
         }
         else if (opcion==8){
             cout<<"Ingrese el ID del router origen: ";
             string id1;
             cin>>id1;
+            id1 = aMayusculas(id1);
             cout<<"Ingrese el ID del router destino: ";
             string id2;
             cin>>id2;
+            id2 = aMayusculas(id2);
             auto camino=net.caminoMinimo(id1,id2);
             if (camino.empty()){cout<<"Routers no conectados\n";}
             else {
@@ -137,9 +156,11 @@ int main(){
             cout<<"Ingrese el ID del primer router: ";
             string id1;
             cin>>id1;
+            id1 = aMayusculas(id1);
             cout<<"Ingrese el ID del segundo router: ";
             string id2;
             cin>>id2;
+            id2 = aMayusculas(id2);
             int costo=leerEntero("Ingrese el nuevo costo de la conexion(min $1): ",1);
             if (net.establecerCostoEnlace(id1,id2,costo)){cout<<"Nuevo costo establecido\n";}
             else{cout<<"Routers no existentes en la red\n";}
